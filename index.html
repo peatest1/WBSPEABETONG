@@ -93,11 +93,6 @@ body{
   grid-template-columns:280px 1fr;
   min-height:100vh;
 }
-@media (max-width:860px){
-  .app-shell{grid-template-columns:1fr;}
-  .sidebar{position:static;height:auto;}
-}
-
 /* ---------- sidebar ---------- */
 .sidebar{
   background:var(--ink);
@@ -394,6 +389,13 @@ table.ledger .del-x:hover{color:var(--rust);}
 }
 .save-indicator.show{opacity:.92;}
 .save-indicator.error{background:var(--rust);}
+
+/* ---------- mobile overrides (kept last so they win the cascade) ---------- */
+@media (max-width:860px){
+  .app-shell{grid-template-columns:1fr;}
+  .sidebar{position:static;height:auto;min-height:0;}
+  .main{padding:18px 16px 40px;}
+}
 </style>
 </head>
 <body>
