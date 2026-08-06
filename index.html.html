@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบคุมงบประมาณงาน</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap');
+
+:root{
+  --ink:#16212B;
+  --ink-2:#1E2C36;
+  --paper:#EDF0EF;
+  --card:#FFFFFF;
+  --border:#D9DEE0;
+  --border-soft:#E6E9EA;
+  --amber:#E8A33D;
+  --amber-dark:#C7841E;
+  --teal:#2F7A6E;
+  --teal-soft:#E4F0EC;
+  --rust:#C1462F;
+  --rust-soft:#FBEAE5;
+  --text:#1C2B33;
+  --text-muted:#66757C;
+  --text-faint:#96A2A7;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Noto Sans Thai',sans-serif;
+  background:var(--paper);
+  color:var(--text);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.eyebrow{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  font-weight:600;
+}
+.mono{font-family:'JetBrains Mono',monospace;}
+.hidden{display:none !important;}
+
+/* ---------- full-page auth / division screens ---------- */
+.center-screen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:var(--paper);padding:24px;
+}
+.screen-card-wrap{max-width:640px;width:100%;text-align:center;}
+.screen-card-wrap h1{font-family:'Space Grotesk';font-size:24px;margin:18px 0 6px;color:var(--text);}
+.screen-card-wrap p{color:var(--text-muted);font-size:13.5px;margin:0 0 26px;}
+
+.auth-box{
+  max-width:380px;margin:0 auto;background:var(--card);border:1px solid var(--border-soft);
+  border-radius:12px;padding:26px;text-align:left;box-shadow:0 8px 30px rgba(22,33,43,.06);
+}
+.auth-box .field{margin-bottom:14px;}
+.auth-box .field label{display:block;font-size:11.5px;color:var(--text-muted);font-weight:600;margin-bottom:5px;}
+.auth-box .field input, .auth-box .field select{
+  width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:7px;font-size:14px;
+  font-family:'Noto Sans Thai',sans-serif;
+}
+.auth-error{
+  background:var(--rust-soft);color:var(--rust);font-size:12.5px;padding:9px 12px;
+  border-radius:7px;margin-bottom:14px;display:none;
+}
+.auth-error.show{display:block;}
+.auth-switch{text-align:center;font-size:12.5px;color:var(--text-muted);margin-top:14px;}
+.auth-switch button{background:none;border:none;color:var(--amber-dark);font-weight:700;cursor:pointer;font-size:12.5px;padding:0;}
+
+.division-options{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+@media (max-width:680px){.division-options{grid-template-columns:1fr;}}
+.division-option{
+  background:var(--card);border:1.5px solid var(--border);border-radius:12px;
+  padding:22px 16px;cursor:pointer;text-align:left;transition:border-color .15s, box-shadow .15s, transform .1s;
+  display:flex;flex-direction:column;gap:10px;
+}
+.division-option:hover{border-color:var(--amber);box-shadow:0 6px 20px rgba(22,33,43,.08);transform:translateY(-2px);}
+.division-option .num{
+  width:30px;height:30px;border-radius:8px;background:var(--ink);color:var(--amber);
+  font-family:'Space Grotesk';font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;
+}
+.division-option .div-name{font-weight:700;font-size:14.5px;color:var(--text);line-height:1.4;}
+.division-option .div-enter{font-size:12px;color:var(--amber-dark);font-weight:600;margin-top:auto;}
+
+/* ---------- shell ---------- */
+.app-shell{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  min-height:100vh;
+}
+@media (max-width:860px){
+  .app-shell{grid-template-columns:1fr;}
+  .sidebar{position:static;height:auto;}
+}
+
+/* ---------- sidebar ---------- */
+.sidebar{
+  background:var(--ink);
+  color:#DCE3E6;
+  padding:22px 16px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:2px 4px 14px;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+.brand-mark{
+  width:34px;height:34px;border-radius:8px;
+  background:linear-gradient(135deg,var(--amber),var(--amber-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk';font-weight:700;color:var(--ink);font-size:15px;
+  flex-shrink:0;
+}
+.brand-title{font-family:'Space Grotesk';font-weight:700;font-size:15px;color:#fff;line-height:1.25;}
+.brand-sub{font-size:11px;color:#93A3AA;margin-top:1px;}
+
+.btn{
+  font-family:'Noto Sans Thai',sans-serif;
+  font-weight:600;
+  font-size:13.5px;
+  border:none;
+  border-radius:8px;
+  padding:10px 14px;
+  cursor:pointer;
+  transition:filter .12s, transform .06s;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:active{transform:translateY(1px);}
+.btn-primary{background:var(--amber);color:var(--ink);}
+.btn-primary:hover{filter:brightness(1.06);}
+.btn-ghost{background:transparent;color:#DCE3E6;border:1px solid rgba(255,255,255,.18);}
+.btn-ghost:hover{background:rgba(255,255,255,.06);}
+.btn-outline{background:#fff;color:var(--text);border:1px solid var(--border);}
+.btn-outline:hover{background:var(--paper);}
+.btn-danger-ghost{background:transparent;color:var(--rust);border:1px solid rgba(193,70,47,.35);}
+.btn-danger-ghost:hover{background:var(--rust-soft);}
+.btn-sm{padding:6px 10px;font-size:12.5px;border-radius:7px;}
+.btn-block{width:100%;justify-content:center;}
+
+.file-list{display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;}
+.file-item{
+  padding:10px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  border:1px solid transparent;
+  transition:background .12s;
+}
+.file-item:hover{background:rgba(255,255,255,.06);}
+.file-item.active{background:rgba(232,163,61,.12);border-color:rgba(232,163,61,.4);}
+.file-item .wbs{font-family:'JetBrains Mono';font-size:11.5px;color:var(--amber);letter-spacing:.02em;}
+.file-item .name{font-size:13.5px;color:#EDEFEF;margin-top:2px;line-height:1.35;}
+.file-empty{color:#7C8A90;font-size:12.5px;padding:16px 4px;text-align:center;}
+
+/* sidebar division tag + account */
+.division-tag{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  background:rgba(232,163,61,.1);border:1px solid rgba(232,163,61,.3);
+  border-radius:8px;padding:9px 11px;font-size:12px;color:#F0D8AE;
+}
+.division-tag .dt-name{font-weight:600;color:#F5E4C2;line-height:1.35;}
+.division-tag .dt-switch{
+  background:none;border:none;color:var(--amber);font-size:11.5px;font-weight:700;
+  cursor:pointer;text-decoration:underline;flex-shrink:0;padding:0;
+}
+.division-tag .dt-switch:hover{color:#fff;}
+.account-row{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  font-size:11.5px;color:#8B9BA2;padding:0 2px;
+}
+.account-row .acc-email{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;}
+.account-row button{background:none;border:none;color:#8B9BA2;font-size:11px;font-weight:600;cursor:pointer;text-decoration:underline;}
+.account-row button:hover{color:#fff;}
+
+/* ---------- main ---------- */
+.main{padding:28px 32px 60px;max-width:1180px;}
+@media (max-width:640px){.main{padding:18px 16px 40px;}}
+
+.welcome{
+  display:flex;flex-direction:column;align-items:flex-start;gap:14px;
+  padding:60px 10px;max-width:520px;
+}
+.welcome h1{font-family:'Space Grotesk';font-size:26px;margin:0;}
+.welcome p{color:var(--text-muted);font-size:14.5px;line-height:1.7;margin:0;}
+
+.project-header{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  gap:16px;flex-wrap:wrap;margin-bottom:18px;
+}
+.project-header .wbs-tag{
+  font-family:'JetBrains Mono';font-size:12px;color:var(--amber-dark);
+  background:#FBF0DD;display:inline-block;padding:3px 8px;border-radius:5px;
+  letter-spacing:.03em;margin-bottom:6px;
+}
+.project-header h1{font-family:'Space Grotesk';font-size:24px;margin:0;line-height:1.3;}
+.header-actions{display:flex;gap:8px;flex-shrink:0;}
+
+.stat-strip{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:10px;margin-bottom:22px;
+}
+@media (max-width:700px){.stat-strip{grid-template-columns:repeat(2,1fr);}}
+.stat-box{
+  background:var(--card);border:1px solid var(--border-soft);
+  border-radius:var(--radius);padding:14px 16px;
+}
+.stat-box .label{font-size:11.5px;color:var(--text-muted);margin-bottom:6px;}
+.stat-box .value{font-family:'JetBrains Mono';font-size:19px;font-weight:700;}
+.stat-box.remain .value.neg{color:var(--rust);}
+.stat-box.remain .value.pos{color:var(--teal);}
+
+/* dept tabs */
+.dept-tabs{
+  display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;
+  border-bottom:1px solid var(--border);padding-bottom:14px;
+}
+.dept-tab{
+  font-size:13px;font-weight:600;padding:8px 14px;border-radius:20px;
+  border:1px solid var(--border);background:#fff;cursor:pointer;color:var(--text-muted);
+  transition:all .12s;white-space:nowrap;
+}
+.dept-tab:hover{border-color:var(--amber);color:var(--text);}
+.dept-tab.active{background:var(--ink);border-color:var(--ink);color:#fff;}
+.dept-tab.add{border-style:dashed;color:var(--amber-dark);border-color:var(--amber);background:#FFFCF6;}
+
+.empty-dept{
+  border:1px dashed var(--border);border-radius:var(--radius);
+  padding:40px 20px;text-align:center;color:var(--text-muted);
+  background:#fff;
+}
+.empty-dept p{margin:0 0 14px;font-size:13.5px;}
+
+/* department info bar */
+.dept-info-bar{
+  display:flex;justify-content:space-between;align-items:flex-end;
+  gap:16px;flex-wrap:wrap;margin-bottom:16px;
+}
+.dept-info-bar .field{margin-bottom:0;}
+.dept-info-bar .field input{
+  font-family:'JetBrains Mono';font-size:13.5px;padding:8px 10px;border:1px solid var(--border);
+  border-radius:7px;width:220px;
+}
+.network-display .label{font-size:11.5px;color:var(--text-muted);font-weight:600;margin-bottom:5px;}
+.network-display .value-row{display:flex;align-items:center;gap:10px;}
+.network-value{font-size:14.5px;color:var(--text);background:#fff;border:1px solid var(--border-soft);
+  padding:7px 12px;border-radius:7px;letter-spacing:.02em;}
+.edit-pencil{
+  font-family:'Noto Sans Thai';font-size:12px;font-weight:600;color:var(--text-muted);
+  background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;
+}
+.edit-pencil:hover{color:var(--amber-dark);border-color:var(--amber);}
+
+/* category cards */
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+@media (max-width:900px){.cat-grid{grid-template-columns:1fr;}}
+.cat-card{
+  background:var(--card);border:1px solid var(--border-soft);border-radius:var(--radius);
+  padding:16px;cursor:pointer;transition:box-shadow .15s, border-color .15s;
+  display:flex;flex-direction:column;gap:10px;
+}
+.cat-card:hover{box-shadow:0 4px 16px rgba(22,33,43,.08);border-color:var(--border);}
+.cat-card-top{display:flex;justify-content:space-between;align-items:baseline;}
+.cat-card .cat-label{font-weight:700;font-size:14.5px;}
+.cat-card .cat-code{font-family:'JetBrains Mono';font-size:11px;color:var(--text-faint);}
+.cat-card .num-row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-muted);}
+.cat-card .num-row .v{font-family:'JetBrains Mono';font-weight:600;color:var(--text);}
+.cat-card .remain{font-size:12.5px;color:var(--text-muted);}
+.cat-card .remain .v.neg{color:var(--rust);}
+.cat-card .remain .v.pos{color:var(--teal);}
+
+/* gauge */
+.gauge-wrap{position:relative;padding-top:4px;}
+.gauge{
+  position:relative;height:14px;border-radius:7px;overflow:hidden;
+  background:repeating-linear-gradient(135deg,#EFF1F0,#EFF1F0 5px,#E5E8E7 5px,#E5E8E7 10px);
+  border:1px solid var(--border-soft);
+}
+.gauge-fill{
+  position:absolute;left:0;top:0;bottom:0;border-radius:7px 0 0 7px;
+  transition:width .25s ease;
+}
+.gauge-fill.ok{background:linear-gradient(90deg,var(--teal),#3E9484);}
+.gauge-fill.warn{background:linear-gradient(90deg,var(--amber-dark),var(--amber));}
+.gauge-fill.over{background:linear-gradient(90deg,var(--rust),#D9613F);}
+.gauge-marker{
+  position:absolute;top:-3px;bottom:-3px;left:80%;width:2px;background:var(--ink);
+}
+.gauge-marker::after{
+  content:'80%';position:absolute;top:-16px;left:50%;transform:translateX(-50%);
+  font-family:'JetBrains Mono';font-size:9.5px;color:var(--text-muted);white-space:nowrap;
+}
+
+/* category detail */
+.detail-back{
+  font-size:12.5px;color:var(--text-muted);cursor:pointer;display:inline-flex;
+  align-items:center;gap:5px;margin-bottom:12px;font-weight:600;
+}
+.detail-back:hover{color:var(--text);}
+.detail-head{
+  background:var(--card);border:1px solid var(--border-soft);border-radius:var(--radius);
+  padding:18px 20px;margin-bottom:16px;
+}
+.detail-title-row{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px;}
+.detail-title{font-family:'Space Grotesk';font-size:19px;font-weight:700;}
+.detail-code-edit{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--text-muted);}
+.detail-code-edit input{
+  font-family:'JetBrains Mono';width:70px;padding:5px 7px;border:1px solid var(--border);
+  border-radius:6px;font-size:12.5px;
+}
+.budget-input-row{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:11.5px;color:var(--text-muted);font-weight:600;}
+.field input{
+  font-family:'JetBrains Mono';font-size:15px;padding:8px 10px;border:1px solid var(--border);
+  border-radius:7px;width:170px;
+}
+.field .readout{font-family:'JetBrains Mono';font-size:19px;font-weight:700;}
+.detail-summary-row{display:flex;gap:26px;flex-wrap:wrap;margin-top:6px;}
+.summary-item .label{font-size:11.5px;color:var(--text-muted);}
+.summary-item .val{font-family:'JetBrains Mono';font-size:16px;font-weight:700;}
+.summary-item .val.neg{color:var(--rust);}
+.summary-item .val.pos{color:var(--teal);}
+
+/* entry form + table */
+.entry-form{
+  display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;
+  background:var(--card);border:1px solid var(--border-soft);border-radius:var(--radius);
+  padding:16px;margin-bottom:14px;
+}
+.entry-form .field input{width:150px;}
+.entry-form .field.desc input{width:260px;}
+.entry-form .field.amt input{width:130px;}
+
+table.ledger{
+  width:100%;border-collapse:collapse;background:var(--card);
+  border:1px solid var(--border-soft);border-radius:var(--radius);overflow:hidden;
+}
+table.ledger thead th{
+  text-align:left;font-size:11.5px;color:var(--text-muted);font-weight:700;
+  text-transform:uppercase;letter-spacing:.04em;
+  background:#F6F7F6;padding:10px 12px;border-bottom:1px solid var(--border-soft);
+}
+table.ledger tbody td{
+  padding:10px 12px;font-size:13px;border-bottom:1px solid var(--border-soft);
+  vertical-align:top;
+}
+table.ledger tbody tr:last-child td{border-bottom:none;}
+table.ledger td.num{font-family:'JetBrains Mono';text-align:right;white-space:nowrap;}
+table.ledger td.num.neg{color:var(--rust);font-weight:700;}
+table.ledger .del-x{
+  color:var(--text-faint);cursor:pointer;font-size:12px;border:none;background:none;
+}
+table.ledger .del-x:hover{color:var(--rust);}
+.ledger-empty{padding:26px;text-align:center;color:var(--text-faint);font-size:13px;}
+
+/* modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(22,33,43,.55);
+  display:flex;align-items:center;justify-content:center;z-index:50;padding:16px;
+}
+.modal{
+  background:#fff;border-radius:12px;padding:24px;width:100%;max-width:420px;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);
+}
+.modal h2{font-family:'Space Grotesk';font-size:18px;margin:0 0 16px;}
+.modal .field{margin-bottom:14px;width:100%;}
+.modal .field input{width:100%;}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+.dept-check-list{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;}
+.dept-check{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);
+  border-radius:8px;cursor:pointer;font-size:13.5px;
+}
+.dept-check.disabled{opacity:.4;cursor:not-allowed;}
+.dept-check input{width:16px;height:16px;}
+
+.save-indicator{
+  position:fixed;bottom:16px;right:20px;background:var(--ink);color:#fff;
+  font-size:12px;padding:8px 14px;border-radius:20px;opacity:0;
+  transition:opacity .3s;pointer-events:none;z-index:80;font-weight:600;
+}
+.save-indicator.show{opacity:.92;}
+.save-indicator.error{background:var(--rust);}
+</style>
+</head>
+<body>
+
+<!-- Auth screen: login / signup -->
+<div class="center-screen" id="authScreen">
+  <div class="screen-card-wrap">
+    <div class="brand" style="border-bottom:none;justify-content:center;margin-bottom:8px;">
+      <div class="brand-mark">WBS</div>
+      <div style="text-align:left;">
+        <div class="brand-title" style="color:#1C2B33;">คุมงบประมาณงาน</div>
+        <div class="brand-sub" style="color:#66757C;">Job Budget Ledger</div>
+      </div>
+    </div>
+    <h1 id="authTitle">เข้าสู่ระบบ</h1>
+    <p id="authSubtitle">เข้าสู่ระบบด้วยอีเมลที่หน่วยงานกำหนดให้</p>
+    <div class="auth-box">
+      <div class="auth-error" id="authError"></div>
+      <div class="field">
+        <label>อีเมล</label>
+        <input type="email" id="authEmail" placeholder="name@company.com" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>รหัสผ่าน</label>
+        <input type="password" id="authPassword" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="current-password">
+      </div>
+      <div class="field hidden" id="authDivisionField">
+        <label>สังกัดแผนก</label>
+        <select id="authDivision"></select>
+      </div>
+      <button class="btn btn-primary btn-block" id="authSubmitBtn" onclick="submitAuth()">เข้าสู่ระบบ</button>
+      <div class="auth-switch">
+        <span id="authSwitchText">ยังไม่มีบัญชี?</span>
+        <button onclick="toggleAuthMode()" id="authSwitchBtn">สมัครสมาชิก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Division screen: shown when a signed-in user has no division assigned yet, or wants to switch -->
+<div class="center-screen hidden" id="divisionScreen">
+  <div class="screen-card-wrap">
+    <div class="brand" style="border-bottom:none;justify-content:center;margin-bottom:8px;">
+      <div class="brand-mark">WBS</div>
+      <div style="text-align:left;">
+        <div class="brand-title" style="color:#1C2B33;">คุมงบประมาณงาน</div>
+        <div class="brand-sub" style="color:#66757C;">Job Budget Ledger</div>
+      </div>
+    </div>
+    <h1>เลือกแผนกที่คุณทำงาน</h1>
+    <p>ระบบจะแสดงเฉพาะแฟ้มงานของแผนกที่เลือกเท่านั้น สามารถสลับแผนกได้ภายหลัง</p>
+    <div class="division-options" id="divisionOptions"></div>
+  </div>
+</div>
+
+<div class="app-shell hidden" id="appShell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">WBS</div>
+      <div>
+        <div class="brand-title">คุมงบประมาณงาน</div>
+        <div class="brand-sub">Job Budget Ledger</div>
+      </div>
+    </div>
+    <div class="division-tag" id="divisionTag"></div>
+    <div class="account-row" id="accountRow"></div>
+    <button class="btn btn-primary btn-block" onclick="openNewProjectModal()">+ แฟ้มงานใหม่</button>
+    <div>
+      <div class="eyebrow" style="color:#7C8A90;margin-bottom:8px;">แฟ้มงานทั้งหมด</div>
+      <div class="file-list" id="fileList"></div>
+    </div>
+  </aside>
+
+  <main class="main" id="main"></main>
+</div>
+
+<div class="save-indicator" id="saveIndicator">บันทึกแล้ว</div>
+
+<!-- New Project Modal -->
+<div class="modal-overlay hidden" id="newProjectModal">
+  <div class="modal">
+    <h2>สร้างแฟ้มงานใหม่</h2>
+    <div class="field">
+      <label>หมายเลขงาน (WBS)</label>
+      <input type="text" id="npWbs" placeholder="เช่น WBS-2569-001">
+    </div>
+    <div class="field">
+      <label>ชื่องาน</label>
+      <input type="text" id="npName" placeholder="เช่น งานก่อสร้างสายส่งแรงสูง...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('newProjectModal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="submitNewProject()">สร้างแฟ้มงาน</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal-overlay hidden" id="addDeptModal">
+  <div class="modal">
+    <h2>เพิ่มแผนก</h2>
+    <div class="dept-check-list" id="deptCheckList"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('addDeptModal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="submitAddDept()">เพิ่มแผนกที่เลือก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Project Modal -->
+<div class="modal-overlay hidden" id="editProjectModal">
+  <div class="modal">
+    <h2>แก้ไขแฟ้มงาน</h2>
+    <div class="field">
+      <label>หมายเลขงาน (WBS)</label>
+      <input type="text" id="epWbs">
+    </div>
+    <div class="field">
+      <label>ชื่องาน</label>
+      <input type="text" id="epName">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('editProjectModal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="submitEditProject()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Firebase init (module) ============ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import {
+    getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
+    signInWithEmailAndPassword, signOut
+  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+  import {
+    getFirestore, doc, getDoc, setDoc, deleteDoc,
+    collection, query, where, onSnapshot
+  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+  // ============================================================
+  // TODO: วางค่า Firebase config ของโปรเจกต์คุณตรงนี้
+  // (Firebase Console > Project settings > General > Your apps > SDK setup and configuration)
+  // ============================================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyAymRPw8YUqBsE95-yv322-VD423qjCy_Q",
+    authDomain: "budget-control-d5ba3.firebaseapp.com",
+    projectId: "budget-control-d5ba3",
+    storageBucket: "budget-control-d5ba3.firebasestorage.app",
+    messagingSenderId: "1060733280467",
+    appId: "1:1060733280467:web:329f99caf59ca36e263426"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  window.fb = {
+    onAuthChange: (cb) => onAuthStateChanged(auth, cb),
+    signUp: (email, password) => createUserWithEmailAndPassword(auth, email, password),
+    signIn: (email, password) => signInWithEmailAndPassword(auth, email, password),
+    signOutUser: () => signOut(auth),
+    getUserProfile: async (uid) => {
+      const snap = await getDoc(doc(db, 'users', uid));
+      return snap.exists() ? snap.data() : null;
+    },
+    setUserDivision: (uid, email, divisionKey) =>
+      setDoc(doc(db, 'users', uid), { email, divisionKey }, { merge: true }),
+    subscribeProjects: (divisionKey, cb) => {
+      const q = query(collection(db, 'projects'), where('divisionKey', '==', divisionKey));
+      return onSnapshot(q, (snap) => cb(snap.docs.map(d => d.data())), (err) => {
+        console.error('subscribeProjects error', err);
+      });
+    },
+    saveProject: (project) => setDoc(doc(db, 'projects', project.id), project),
+    deleteProjectDoc: (id) => deleteDoc(doc(db, 'projects', id)),
+  };
+
+  window.__fbReady = true;
+  window.dispatchEvent(new Event('fbready'));
+</script>
+
+<script>
+/* ============ constants ============ */
+const DIVISIONS = [
+  {key:'om',        name:'แผนกปฏิบัติการและบำรุงรักษาระบบไฟฟ้า'},
+  {key:'construct',  name:'แผนกก่อสร้างระบบไฟฟ้า'},
+  {key:'meter',      name:'แผนกมิตเตอร์และหม้อแปลง'},
+];
+const DEPARTMENTS = [
+  {key:'hv_construct', name:'แผนกก่อสร้างแรงสูง'},
+  {key:'hv_demolish',  name:'แผนกรื้อถอนแรงสูง'},
+  {key:'lv_construct', name:'แผนกก่อสร้างแรงต่ำ'},
+  {key:'lv_demolish',  name:'แผนกรื้อถอนแรงต่ำ'},
+  {key:'tr_construct', name:'แผนกก่อสร้างหม้อแปลง'},
+  {key:'tr_demolish',  name:'แผนกรื้อถอนหม้อแปลง'},
+];
+const CATEGORY_DEFS = [
+  {key:'labor',   label:'ค่าแรง',        code:'0030'},
+  {key:'control', label:'ค่าควบคุมงาน',  code:'0040'},
+  {key:'misc',    label:'เบ็ดเตล็ด',     code:'0050'},
+];
+const USABLE_RATIO = 0.8;
+
+/* ============ state ============ */
+let state = {
+  user: null,            // {uid, email}
+  userDivision: null,    // divisionKey saved on the user's profile
+  activeDivision: null,  // divisionKey currently being viewed
+  projects: [],
+  activeProjectId: null,
+  activeDeptKey: null,
+  activeCatKey: null,
+  editingNetworkKey: null,
+  authMode: 'login',     // 'login' | 'signup'
+};
+let projectsUnsub = null;
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmt(n){
+  n = Number(n)||0;
+  return n.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function newBudgetCat(def){
+  return {label:def.label, code:def.code, amount100:0, entries:[]};
+}
+function newDepartment(){
+  const budgets = {};
+  CATEGORY_DEFS.forEach(d=> budgets[d.key] = newBudgetCat(d));
+  return {networkNo:'', budgets};
+}
+function escapeHtml(s){
+  return String(s??'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function flashSaved(isError){
+  const el = document.getElementById('saveIndicator');
+  el.textContent = isError ? 'บันทึกไม่สำเร็จ' : 'บันทึกแล้ว';
+  el.classList.toggle('error', !!isError);
+  el.classList.add('show');
+  setTimeout(()=> el.classList.remove('show'), 1400);
+}
+
+/* ============ auth ============ */
+function populateDivisionSelect(){
+  const sel = document.getElementById('authDivision');
+  if(sel.options.length) return;
+  sel.innerHTML = DIVISIONS.map(d=>`<option value="${d.key}">${d.name}</option>`).join('');
+}
+function toggleAuthMode(){
+  state.authMode = state.authMode === 'login' ? 'signup' : 'login';
+  renderAuthScreen();
+}
+function renderAuthScreen(){
+  populateDivisionSelect();
+  const isSignup = state.authMode === 'signup';
+  document.getElementById('authTitle').textContent = isSignup ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
+  document.getElementById('authSubtitle').textContent = isSignup
+    ? 'สร้างบัญชีและเลือกแผนกที่คุณสังกัด'
+    : 'เข้าสู่ระบบด้วยอีเมลที่หน่วยงานกำหนดให้';
+  document.getElementById('authDivisionField').classList.toggle('hidden', !isSignup);
+  document.getElementById('authSubmitBtn').textContent = isSignup ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
+  document.getElementById('authSwitchText').textContent = isSignup ? 'มีบัญชีอยู่แล้ว?' : 'ยังไม่มีบัญชี?';
+  document.getElementById('authSwitchBtn').textContent = isSignup ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
+  document.getElementById('authError').classList.remove('show');
+}
+async function submitAuth(){
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errEl = document.getElementById('authError');
+  errEl.classList.remove('show');
+  if(!email || !password){
+    errEl.textContent = 'กรุณากรอกอีเมลและรหัสผ่าน';
+    errEl.classList.add('show');
+    return;
+  }
+  try{
+    if(state.authMode === 'signup'){
+      const divisionKey = document.getElementById('authDivision').value;
+      const cred = await window.fb.signUp(email, password);
+      await window.fb.setUserDivision(cred.user.uid, email, divisionKey);
+    } else {
+      await window.fb.signIn(email, password);
+    }
+    // onAuthChange listener takes it from here
+  }catch(e){
+    errEl.textContent = translateAuthError(e);
+    errEl.classList.add('show');
+  }
+}
+function translateAuthError(e){
+  const code = e.code || '';
+  if(code.includes('email-already-in-use')) return 'อีเมลนี้มีบัญชีอยู่แล้ว ลองเข้าสู่ระบบแทน';
+  if(code.includes('invalid-email')) return 'รูปแบบอีเมลไม่ถูกต้อง';
+  if(code.includes('weak-password')) return 'รหัสผ่านสั้นเกินไป (อย่างน้อย 6 ตัวอักษร)';
+  if(code.includes('user-not-found') || code.includes('wrong-password') || code.includes('invalid-credential')) return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+  return 'เกิดข้อผิดพลาด: ' + (e.message || code);
+}
+async function logout(){
+  if(!confirm('ออกจากระบบ?')) return;
+  if(projectsUnsub){ projectsUnsub(); projectsUnsub = null; }
+  await window.fb.signOutUser();
+}
+
+/* ============ division ============ */
+async function selectDivision(key){
+  if(!state.user) return;
+  try{
+    await window.fb.setUserDivision(state.user.uid, state.user.email, key);
+    state.userDivision = key;
+    state.activeDivision = key;
+    state.activeProjectId = null; state.activeDeptKey=null; state.activeCatKey=null;
+    subscribeToProjects();
+    render();
+  }catch(e){
+    alert('ตั้งค่าแผนกไม่สำเร็จ: ' + e.message);
+  }
+}
+function switchDivision(){
+  if(projectsUnsub){ projectsUnsub(); projectsUnsub = null; }
+  state.activeDivision = null;
+  state.activeProjectId = null; state.activeDeptKey=null; state.activeCatKey=null;
+  render();
+}
+function subscribeToProjects(){
+  if(projectsUnsub){ projectsUnsub(); projectsUnsub = null; }
+  state.projects = [];
+  projectsUnsub = window.fb.subscribeProjects(state.activeDivision, (projects)=>{
+    state.projects = projects;
+    if(state.activeProjectId && !projects.find(p=>p.id===state.activeProjectId)){
+      state.activeProjectId=null; state.activeDeptKey=null; state.activeCatKey=null;
+    }
+    render();
+  });
+}
+
+/* ============ persistence of project data ============ */
+let saveTimer=null;
+function saveState(){
+  const p = getProject(state.activeProjectId);
+  if(!p) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    try{
+      await window.fb.saveProject(p);
+      flashSaved(false);
+    }catch(e){
+      console.error(e);
+      flashSaved(true);
+    }
+  }, 250);
+}
+
+/* ============ helpers on data ============ */
+function getProject(id){ return state.projects.find(p=>p.id===id); }
+function catTotals(cat){
+  const amount100 = Number(cat.amount100)||0;
+  const usable80 = amount100 * USABLE_RATIO;
+  const sortedEntries = [...cat.entries].sort((a,b)=> (a.date||'').localeCompare(b.date||'') || a.createdAt-b.createdAt);
+  let running = 0;
+  const rows = sortedEntries.map(e=>{
+    running += Number(e.amount)||0;
+    return {...e, cumulative: running};
+  });
+  const totalPaid = running;
+  const remaining = usable80 - totalPaid;
+  return {amount100, usable80, totalPaid, remaining, rows};
+}
+function projectTotals(project){
+  let amount100=0, usable80=0, totalPaid=0;
+  Object.values(project.departments||{}).forEach(dept=>{
+    Object.values(dept.budgets).forEach(cat=>{
+      const t = catTotals(cat);
+      amount100 += t.amount100; usable80 += t.usable80; totalPaid += t.totalPaid;
+    });
+  });
+  return {amount100, usable80, totalPaid, remaining: usable80-totalPaid};
+}
+
+/* ============ modal helpers ============ */
+function openModal(id){ document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+
+function openNewProjectModal(){
+  document.getElementById('npWbs').value='';
+  document.getElementById('npName').value='';
+  openModal('newProjectModal');
+  setTimeout(()=>document.getElementById('npWbs').focus(),50);
+}
+async function submitNewProject(){
+  const wbs = document.getElementById('npWbs').value.trim();
+  const name = document.getElementById('npName').value.trim();
+  if(!wbs || !name){ alert('กรุณากรอกหมายเลขงานและชื่องานให้ครบ'); return; }
+  const project = {
+    id: uid(), wbs, name, divisionKey: state.activeDivision,
+    createdBy: state.user ? state.user.uid : null,
+    createdAt: Date.now(), departments: {}
+  };
+  state.projects.push(project);
+  state.activeProjectId = project.id;
+  state.activeDeptKey = null;
+  state.activeCatKey = null;
+  closeModal('newProjectModal');
+  render();
+  try{
+    await window.fb.saveProject(project);
+    flashSaved(false);
+  }catch(e){
+    alert('สร้างแฟ้มงานไม่สำเร็จ: ' + e.message);
+  }
+  openAddDeptModal();
+}
+
+function openEditProjectModal(){
+  const p = getProject(state.activeProjectId);
+  if(!p) return;
+  document.getElementById('epWbs').value = p.wbs;
+  document.getElementById('epName').value = p.name;
+  openModal('editProjectModal');
+}
+function submitEditProject(){
+  const p = getProject(state.activeProjectId);
+  if(!p) return;
+  const wbs = document.getElementById('epWbs').value.trim();
+  const name = document.getElementById('epName').value.trim();
+  if(!wbs || !name){ alert('กรุณากรอกให้ครบ'); return; }
+  p.wbs = wbs; p.name = name;
+  closeModal('editProjectModal');
+  saveState(); render();
+}
+async function deleteProject(){
+  const p = getProject(state.activeProjectId);
+  if(!p) return;
+  if(!confirm('ยืนยันลบแฟ้มงาน "'+p.name+'" ? ข้อมูลทั้งหมดในแฟ้มนี้จะหายไป')) return;
+  state.activeProjectId = null; state.activeDeptKey=null; state.activeCatKey=null;
+  render();
+  try{
+    await window.fb.deleteProjectDoc(p.id);
+    flashSaved(false);
+  }catch(e){
+    alert('ลบแฟ้มงานไม่สำเร็จ: ' + e.message);
+  }
+}
+
+function openAddDeptModal(){
+  const p = getProject(state.activeProjectId);
+  if(!p) return;
+  const list = document.getElementById('deptCheckList');
+  list.innerHTML = DEPARTMENTS.map(d=>{
+    const added = !!p.departments[d.key];
+    return `<label class="dept-check ${added?'disabled':''}">
+      <input type="checkbox" value="${d.key}" ${added?'disabled':''}>
+      <span>${d.name}${added?' <span style="color:var(--text-faint)">(เพิ่มแล้ว)</span>':''}</span>
+    </label>`;
+  }).join('');
+  openModal('addDeptModal');
+}
+function submitAddDept(){
+  const p = getProject(state.activeProjectId);
+  if(!p) return;
+  const checked = [...document.querySelectorAll('#deptCheckList input:checked')].map(c=>c.value);
+  checked.forEach(key=>{ if(!p.departments[key]) p.departments[key] = newDepartment(); });
+  if(checked.length){ state.activeDeptKey = checked[0]; state.activeCatKey = null; }
+  closeModal('addDeptModal');
+  saveState(); render();
+}
+function removeDepartment(deptKey){
+  const p = getProject(state.activeProjectId);
+  if(!p) return;
+  const deptName = DEPARTMENTS.find(d=>d.key===deptKey).name;
+  if(!confirm('ยืนยันลบแผนก "'+deptName+'" ออกจากแฟ้มงานนี้?')) return;
+  delete p.departments[deptKey];
+  if(state.activeDeptKey===deptKey){ state.activeDeptKey=null; state.activeCatKey=null; }
+  saveState(); render();
+}
+
+/* ============ selection ============ */
+function selectProject(id){
+  state.activeProjectId = id; state.activeDeptKey=null; state.activeCatKey=null; state.editingNetworkKey=null; render();
+}
+function selectDept(key){ state.activeDeptKey = key; state.activeCatKey=null; state.editingNetworkKey=null; render(); }
+function selectCat(key){ state.activeCatKey = key; render(); }
+function backToDeptGrid(){ state.activeCatKey = null; render(); }
+
+/* ============ network number edit ============ */
+function editNetworkNo(deptKey){
+  state.editingNetworkKey = deptKey;
+  render();
+  setTimeout(()=>{ const el=document.getElementById('networkNoInput'); if(el) el.focus(); }, 30);
+}
+function cancelEditNetworkNo(){
+  state.editingNetworkKey = null;
+  render();
+}
+function saveNetworkNo(deptKey){
+  const p = getProject(state.activeProjectId);
+  const value = document.getElementById('networkNoInput').value.trim();
+  p.departments[deptKey].networkNo = value;
+  state.editingNetworkKey = null;
+  saveState(); render();
+}
+
+/* ============ budget mutations ============ */
+function updateAmount100(deptKey, catKey, value){
+  const p = getProject(state.activeProjectId);
+  const cat = p.departments[deptKey].budgets[catKey];
+  cat.amount100 = Math.max(0, Number(value)||0);
+  saveState(); render();
+}
+function updateCode(deptKey, catKey, value){
+  const p = getProject(state.activeProjectId);
+  const cat = p.departments[deptKey].budgets[catKey];
+  cat.code = value;
+  saveState(); render();
+}
+function addEntry(deptKey, catKey){
+  const p = getProject(state.activeProjectId);
+  const cat = p.departments[deptKey].budgets[catKey];
+  const date = document.getElementById('entryDate').value || todayStr();
+  const desc = document.getElementById('entryDesc').value.trim();
+  const amount = Number(document.getElementById('entryAmount').value);
+  if(!desc || !amount || amount<=0){ alert('กรุณากรอกรายการและจำนวนเงินให้ถูกต้อง'); return false; }
+  cat.entries.push({id:uid(), date, desc, amount, createdAt:Date.now()});
+  saveState(); render();
+  return false;
+}
+function deleteEntry(deptKey, catKey, entryId){
+  const p = getProject(state.activeProjectId);
+  const cat = p.departments[deptKey].budgets[catKey];
+  if(!confirm('ยืนยันลบรายการนี้?')) return;
+  cat.entries = cat.entries.filter(e=>e.id!==entryId);
+  saveState(); render();
+}
+
+/* ============ render ============ */
+function render(){
+  const authScreen = document.getElementById('authScreen');
+  const divisionScreen = document.getElementById('divisionScreen');
+  const appShell = document.getElementById('appShell');
+
+  if(!state.user){
+    authScreen.classList.remove('hidden');
+    divisionScreen.classList.add('hidden');
+    appShell.classList.add('hidden');
+    renderAuthScreen();
+    return;
+  }
+  if(!state.activeDivision){
+    authScreen.classList.add('hidden');
+    divisionScreen.classList.remove('hidden');
+    appShell.classList.add('hidden');
+    renderDivisionOptions();
+    return;
+  }
+  authScreen.classList.add('hidden');
+  divisionScreen.classList.add('hidden');
+  appShell.classList.remove('hidden');
+  renderDivisionTag();
+  renderAccountRow();
+  renderSidebar();
+  renderMain();
+}
+
+function renderDivisionOptions(){
+  const el = document.getElementById('divisionOptions');
+  el.innerHTML = DIVISIONS.map((d,i)=>`
+    <div class="division-option" onclick="selectDivision('${d.key}')">
+      <div class="num">${i+1}</div>
+      <div class="div-name">${d.name}</div>
+      <div class="div-enter">เข้าใช้งาน →</div>
+    </div>
+  `).join('');
+}
+function renderDivisionTag(){
+  const el = document.getElementById('divisionTag');
+  const d = DIVISIONS.find(x=>x.key===state.activeDivision);
+  el.innerHTML = `
+    <span class="dt-name">${d ? d.name : ''}</span>
+    <button class="dt-switch" onclick="switchDivision()">เปลี่ยนแผนก</button>
+  `;
+}
+function renderAccountRow(){
+  const el = document.getElementById('accountRow');
+  el.innerHTML = `
+    <span class="acc-email">${escapeHtml(state.user.email||'')}</span>
+    <button onclick="logout()">ออกจากระบบ</button>
+  `;
+}
+
+function renderSidebar(){
+  const list = document.getElementById('fileList');
+  const projects = state.projects;
+  if(!projects.length){
+    list.innerHTML = `<div class="file-empty">ยังไม่มีแฟ้มงานในแผนกนี้<br>กด "+ แฟ้มงานใหม่" เพื่อเริ่มต้น</div>`;
+    return;
+  }
+  list.innerHTML = projects.map(p=>{
+    const active = p.id===state.activeProjectId;
+    return `<div class="file-item ${active?'active':''}" onclick="selectProject('${p.id}')">
+      <div class="wbs">${escapeHtml(p.wbs)}</div>
+      <div class="name">${escapeHtml(p.name)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderMain(){
+  const main = document.getElementById('main');
+  const p = getProject(state.activeProjectId);
+  if(!p){
+    main.innerHTML = `<div class="welcome">
+      <h1>คุมงบประมาณงาน</h1>
+      <p>สร้างแฟ้มงานพร้อมหมายเลขงาน (WBS) เพิ่มแผนกที่เกี่ยวข้อง แล้วกรอกงบประมาณของแต่ละแผนก
+      ระบบจะคำนวณงบที่ใช้ได้จริง (80%) และสรุปยอดจ่าย/คงเหลือให้อัตโนมัติ</p>
+      <button class="btn btn-primary" onclick="openNewProjectModal()">+ สร้างแฟ้มงานแรกของคุณ</button>
+    </div>`;
+    return;
+  }
+
+  const totals = projectTotals(p);
+  const remainCls = totals.remaining<0?'neg':'pos';
+
+  let html = `
+    <div class="project-header">
+      <div>
+        <div class="wbs-tag mono">${escapeHtml(p.wbs)}</div>
+        <h1>${escapeHtml(p.name)}</h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline btn-sm" onclick="openEditProjectModal()">แก้ไข</button>
+        <button class="btn btn-danger-ghost btn-sm" onclick="deleteProject()">ลบแฟ้มงาน</button>
+      </div>
+    </div>
+
+    <div class="stat-strip">
+      <div class="stat-box"><div class="label">งบทั้งหมด (100%)</div><div class="value">${fmt(totals.amount100)}</div></div>
+      <div class="stat-box"><div class="label">งบใช้ได้ (80%)</div><div class="value">${fmt(totals.usable80)}</div></div>
+      <div class="stat-box"><div class="label">จ่ายไปแล้ว</div><div class="value">${fmt(totals.totalPaid)}</div></div>
+      <div class="stat-box remain"><div class="label">คงเหลือ</div><div class="value ${remainCls}">${fmt(totals.remaining)}</div></div>
+    </div>
+
+    <div class="dept-tabs">
+  `;
+
+  const addedKeys = Object.keys(p.departments);
+  DEPARTMENTS.forEach(d=>{
+    if(addedKeys.includes(d.key)){
+      const active = state.activeDeptKey===d.key;
+      html += `<div class="dept-tab ${active?'active':''}" onclick="selectDept('${d.key}')">${d.name}</div>`;
+    }
+  });
+  html += `<div class="dept-tab add" onclick="openAddDeptModal()">+ เพิ่มแผนก</div>`;
+  html += `</div>`;
+
+  if(!addedKeys.length){
+    html += `<div class="empty-dept"><p>ยังไม่มีแผนกในแฟ้มงานนี้</p>
+      <button class="btn btn-primary btn-sm" onclick="openAddDeptModal()">+ เพิ่มแผนก</button></div>`;
+  } else {
+    const deptKey = state.activeDeptKey || addedKeys[0];
+    if(state.activeDeptKey === null) state.activeDeptKey = deptKey;
+    const dept = p.departments[deptKey];
+    const deptName = DEPARTMENTS.find(d=>d.key===deptKey).name;
+
+    if(state.activeCatKey && dept.budgets[state.activeCatKey]){
+      html += renderCategoryDetail(deptKey, deptName, dept.networkNo, state.activeCatKey, dept.budgets[state.activeCatKey]);
+    } else {
+      html += `<div class="dept-info-bar">
+        ${state.editingNetworkKey===deptKey ? `
+          <div class="field">
+            <label>เลขที่โครงข่าย</label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="networkNoInput" value="${escapeHtml(dept.networkNo||'')}" placeholder="เช่น 6001423758" onkeydown="if(event.key==='Enter')saveNetworkNo('${deptKey}'); if(event.key==='Escape')cancelEditNetworkNo();">
+              <button class="btn btn-primary btn-sm" onclick="saveNetworkNo('${deptKey}')">บันทึก</button>
+              <button class="btn btn-outline btn-sm" onclick="cancelEditNetworkNo()">ยกเลิก</button>
+            </div>
+          </div>
+        ` : `
+          <div class="network-display">
+            <div class="label">เลขที่โครงข่าย</div>
+            <div class="value-row">
+              <span class="mono network-value">${dept.networkNo ? escapeHtml(dept.networkNo) : 'ยังไม่ได้กรอก'}</span>
+              <button class="edit-pencil" onclick="editNetworkNo('${deptKey}')" title="แก้ไขเลขที่โครงข่าย">แก้ไข</button>
+            </div>
+          </div>
+        `}
+        <button class="btn btn-danger-ghost btn-sm" onclick="removeDepartment('${deptKey}')">ลบแผนกนี้</button>
+      </div>`;
+      html += `<div class="cat-grid">`;
+      CATEGORY_DEFS.forEach(def=>{
+        const cat = dept.budgets[def.key];
+        html += renderCatCard(deptKey, def.key, cat);
+      });
+      html += `</div>`;
+    }
+  }
+
+  main.innerHTML = html;
+
+  const dateInput = document.getElementById('entryDate');
+  if(dateInput && !dateInput.value) dateInput.value = todayStr();
+}
+
+function gaugeClass(pct){
+  if(pct>100) return 'over';
+  if(pct>=80) return 'warn';
+  return 'ok';
+}
+
+function renderCatCard(deptKey, catKey, cat){
+  const t = catTotals(cat);
+  const pct = t.amount100>0 ? (t.totalPaid/t.amount100*100) : 0;
+  const barWidth = Math.min(pct,100);
+  const gClass = gaugeClass(pct);
+  const remainCls = t.remaining<0?'neg':'pos';
+  return `<div class="cat-card" onclick="selectCat('${catKey}')">
+    <div class="cat-card-top">
+      <span class="cat-label">${cat.label}</span>
+      <span class="cat-code mono">${escapeHtml(cat.code||'—')}</span>
+    </div>
+    <div class="gauge-wrap">
+      <div class="gauge">
+        <div class="gauge-fill ${gClass}" style="width:${barWidth}%"></div>
+        <div class="gauge-marker"></div>
+      </div>
+    </div>
+    <div class="num-row"><span>งบ 100%</span><span class="v">${fmt(t.amount100)}</span></div>
+    <div class="num-row"><span>งบใช้ได้ (80%)</span><span class="v">${fmt(t.usable80)}</span></div>
+    <div class="num-row"><span>จ่ายแล้ว</span><span class="v">${fmt(t.totalPaid)}</span></div>
+    <div class="remain num-row"><span>คงเหลือ</span><span class="v ${remainCls}">${fmt(t.remaining)}</span></div>
+  </div>`;
+}
+
+function renderCategoryDetail(deptKey, deptName, networkNo, catKey, cat){
+  const t = catTotals(cat);
+  const pct = t.amount100>0 ? (t.totalPaid/t.amount100*100) : 0;
+  const barWidth = Math.min(pct,100);
+  const gClass = gaugeClass(pct);
+  const remainCls = t.remaining<0?'neg':'pos';
+
+  let rowsHtml = '';
+  if(!t.rows.length){
+    rowsHtml = `<div class="ledger-empty">ยังไม่มีรายการจ่าย เพิ่มรายการแรกด้านบน</div>`;
+  } else {
+    rowsHtml = `<table class="ledger">
+      <thead><tr>
+        <th>วันที่</th><th>รายการ</th>
+        <th style="text-align:right">จ่ายรอบนี้</th>
+        <th style="text-align:right">รวมจ่าย</th>
+        <th style="text-align:right">คงเหลือ</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+        ${t.rows.map(r=>{
+          const rowRemaining = t.usable80 - r.cumulative;
+          return `<tr>
+            <td class="mono">${escapeHtml(r.date)}</td>
+            <td>${escapeHtml(r.desc)}</td>
+            <td class="num">${fmt(r.amount)}</td>
+            <td class="num">${fmt(r.cumulative)}</td>
+            <td class="num ${rowRemaining<0?'neg':''}">${fmt(rowRemaining)}</td>
+            <td><button class="del-x" onclick="deleteEntry('${deptKey}','${catKey}','${r.id}')" title="ลบรายการ">✕</button></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  return `
+    <div class="detail-back" onclick="backToDeptGrid()">← กลับไปที่ ${deptName}</div>
+    <div class="detail-head">
+      <div class="detail-title-row">
+        <div>
+          <div class="detail-title">${cat.label}</div>
+          <div style="color:var(--text-muted);font-size:12.5px;margin-top:2px;">${deptName}${networkNo ? ' · เลขที่โครงข่าย <span class="mono">'+escapeHtml(networkNo)+'</span>' : ''}</div>
+        </div>
+        <div class="detail-code-edit">
+          รหัสงบ
+          <input type="text" value="${escapeHtml(cat.code)}" onchange="updateCode('${deptKey}','${catKey}', this.value)">
+        </div>
+      </div>
+
+      <div class="budget-input-row">
+        <div class="field">
+          <label>งบประมาณ (100%)</label>
+          <input type="number" min="0" step="0.01" value="${cat.amount100}" onchange="updateAmount100('${deptKey}','${catKey}', this.value)">
+        </div>
+        <div class="field">
+          <label>งบที่ใช้ได้ (80%)</label>
+          <div class="readout">${fmt(t.usable80)}</div>
+        </div>
+      </div>
+
+      <div class="gauge-wrap">
+        <div class="gauge">
+          <div class="gauge-fill ${gClass}" style="width:${barWidth}%"></div>
+          <div class="gauge-marker"></div>
+        </div>
+      </div>
+
+      <div class="detail-summary-row">
+        <div class="summary-item"><div class="label">รวมจ่ายแล้ว</div><div class="val">${fmt(t.totalPaid)}</div></div>
+        <div class="summary-item"><div class="label">คงเหลือ</div><div class="val ${remainCls}">${fmt(t.remaining)}</div></div>
+      </div>
+    </div>
+
+    <div class="entry-form">
+      <div class="field"><label>วันที่</label><input type="date" id="entryDate"></div>
+      <div class="field desc"><label>รายการ</label><input type="text" id="entryDesc" placeholder="เช่น ค่าแรงคนงาน 1-15 ส.ค. 69" onkeydown="if(event.key==='Enter'){addEntry('${deptKey}','${catKey}');}"></div>
+      <div class="field amt"><label>จ่ายรอบนี้ (บาท)</label><input type="number" id="entryAmount" min="0" step="0.01" placeholder="0.00" onkeydown="if(event.key==='Enter'){addEntry('${deptKey}','${catKey}');}"></div>
+      <button class="btn btn-primary" type="button" onclick="addEntry('${deptKey}','${catKey}')">+ เพิ่มรายการ</button>
+    </div>
+
+    ${rowsHtml}
+  `;
+}
+
+/* ============ init ============ */
+function initAuthListener(){
+  window.fb.onAuthChange(async (user)=>{
+    if(projectsUnsub){ projectsUnsub(); projectsUnsub = null; }
+    if(!user){
+      state.user = null; state.userDivision = null; state.activeDivision = null;
+      state.projects = []; state.activeProjectId = null;
+      render();
+      return;
+    }
+    state.user = {uid:user.uid, email:user.email};
+    let profile = null;
+    try{ profile = await window.fb.getUserProfile(user.uid); }catch(e){ console.error(e); }
+    state.userDivision = profile ? profile.divisionKey : null;
+    state.activeDivision = state.userDivision || null;
+    if(state.activeDivision){ subscribeToProjects(); }
+    render();
+  });
+}
+if(window.__fbReady){ initAuthListener(); }
+else { window.addEventListener('fbready', initAuthListener); }
+render();
+</script>
+</body>
+</html>
