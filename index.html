@@ -174,10 +174,10 @@ body{
 .division-tag .dt-switch:hover{color:#fff;}
 .account-row{
   display:flex;justify-content:space-between;align-items:center;gap:8px;
-  font-size:11.5px;color:#8B9BA2;padding:0 2px;
+  font-size:11.5px;color:#8B9BA2;padding:0 2px;flex-wrap:wrap;
 }
-.account-row .acc-email{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;}
-.account-row button{background:none;border:none;color:#8B9BA2;font-size:11px;font-weight:600;cursor:pointer;text-decoration:underline;}
+.account-row .acc-email{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px;}
+.account-row button{background:none;border:none;color:#8B9BA2;font-size:11px;font-weight:600;cursor:pointer;text-decoration:underline;white-space:nowrap;}
 .account-row button:hover{color:#fff;}
 
 /* ---------- main ---------- */
@@ -426,6 +426,10 @@ table.ledger .del-x:hover{color:var(--rust);}
     <p id="authSubtitle">เข้าสู่ระบบด้วยอีเมลที่หน่วยงานกำหนดให้</p>
     <div class="auth-box">
       <div class="auth-error" id="authError"></div>
+      <div class="field hidden" id="authNameField">
+        <label>ชื่อ-นามสกุล (แสดงในรายการที่คุณเพิ่ม)</label>
+        <input type="text" id="authName" placeholder="เช่น สมชาย ใจดี" autocomplete="name">
+      </div>
       <div class="field">
         <label>อีเมล</label>
         <input type="email" id="authEmail" placeholder="name@company.com" autocomplete="username">
@@ -536,6 +540,25 @@ table.ledger .del-x:hover{color:var(--rust);}
   </div>
 </div>
 
+<!-- Profile Modal -->
+<div class="modal-overlay hidden" id="profileModal">
+  <div class="modal">
+    <h2>โปรไฟล์ของฉัน</h2>
+    <div class="field">
+      <label>ชื่อ-นามสกุล (จะแสดงในรายการที่คุณเพิ่ม)</label>
+      <input type="text" id="pfName" placeholder="เช่น สมชาย ใจดี">
+    </div>
+    <div class="field">
+      <label>อีเมล</label>
+      <input type="text" id="pfEmail" disabled style="background:var(--paper);color:var(--text-muted);">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('profileModal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="submitProfileName()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ Firebase init (module) ============ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
@@ -576,6 +599,8 @@ table.ledger .del-x:hover{color:var(--rust);}
     },
     setUserDivision: (uid, email, divisionKey) =>
       setDoc(doc(db, 'users', uid), { email, divisionKey }, { merge: true }),
+    setUserProfile: (uid, data) =>
+      setDoc(doc(db, 'users', uid), data, { merge: true }),
     subscribeProjects: (divisionKey, cb) => {
       const q = query(collection(db, 'projects'), where('divisionKey', '==', divisionKey));
       return onSnapshot(q, (snap) => cb(snap.docs.map(d => d.data())), (err) => {
@@ -669,6 +694,7 @@ function renderAuthScreen(){
     ? 'สร้างบัญชีและเลือกแผนกที่คุณสังกัด'
     : 'เข้าสู่ระบบด้วยอีเมลที่หน่วยงานกำหนดให้';
   document.getElementById('authDivisionField').classList.toggle('hidden', !isSignup);
+  document.getElementById('authNameField').classList.toggle('hidden', !isSignup);
   document.getElementById('authSubmitBtn').textContent = isSignup ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
   document.getElementById('authSwitchText').textContent = isSignup ? 'มีบัญชีอยู่แล้ว?' : 'ยังไม่มีบัญชี?';
   document.getElementById('authSwitchBtn').textContent = isSignup ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
@@ -687,8 +713,14 @@ async function submitAuth(){
   try{
     if(state.authMode === 'signup'){
       const divisionKey = document.getElementById('authDivision').value;
+      const displayName = document.getElementById('authName').value.trim();
+      if(!displayName){
+        errEl.textContent = 'กรุณากรอกชื่อ-นามสกุล';
+        errEl.classList.add('show');
+        return;
+      }
       const cred = await window.fb.signUp(email, password);
-      await window.fb.setUserDivision(cred.user.uid, email, divisionKey);
+      await window.fb.setUserProfile(cred.user.uid, { email, divisionKey, displayName });
     } else {
       await window.fb.signIn(email, password);
     }
@@ -948,6 +980,7 @@ function addEntry(deptKey, catKey){
   cat.entries.push({
     id:uid(), date, desc, amount, createdAt:Date.now(),
     addedBy: state.user ? state.user.uid : null,
+    addedByName: state.user ? (state.user.displayName || state.user.email) : null,
     addedByEmail: state.user ? state.user.email : null,
   });
   saveState(); render();
@@ -1016,10 +1049,32 @@ function renderDivisionTag(){
 }
 function renderAccountRow(){
   const el = document.getElementById('accountRow');
+  const shownName = state.user.displayName || state.user.email || '';
   el.innerHTML = `
-    <span class="acc-email">${escapeHtml(state.user.email||'')}</span>
-    <button onclick="logout()">ออกจากระบบ</button>
+    <span class="acc-email" title="${escapeHtml(state.user.email||'')}">${escapeHtml(shownName)}</span>
+    <span style="display:flex;gap:8px;flex-shrink:0;">
+      <button onclick="openProfileModal()">แก้ไขชื่อ</button>
+      <button onclick="logout()">ออกจากระบบ</button>
+    </span>
   `;
+}
+function openProfileModal(){
+  document.getElementById('pfName').value = state.user.displayName || '';
+  document.getElementById('pfEmail').value = state.user.email || '';
+  openModal('profileModal');
+}
+async function submitProfileName(){
+  const name = document.getElementById('pfName').value.trim();
+  if(!name){ alert('กรุณากรอกชื่อ-นามสกุล'); return; }
+  try{
+    await window.fb.setUserProfile(state.user.uid, { displayName: name });
+    state.user.displayName = name;
+    closeModal('profileModal');
+    flashSaved(false);
+    render();
+  }catch(e){
+    alert('บันทึกชื่อไม่สำเร็จ: ' + e.message);
+  }
 }
 
 function renderSidebar(){
@@ -1194,7 +1249,7 @@ function renderCategoryDetail(deptKey, deptName, networkNo, catKey, cat, isOwner
           const canDelete = isOwner || !!(r.addedBy && state.user && r.addedBy === state.user.uid);
           return `<tr>
             <td class="mono">${escapeHtml(r.date)}</td>
-            <td>${escapeHtml(r.desc)}${r.addedByEmail ? `<div style="font-size:10.5px;color:var(--text-faint);margin-top:2px;">เพิ่มโดย ${escapeHtml(r.addedByEmail)}</div>` : ''}</td>
+            <td>${escapeHtml(r.desc)}${(r.addedByName || r.addedByEmail) ? `<div style="font-size:10.5px;color:var(--text-faint);margin-top:2px;">เพิ่มโดย ${escapeHtml(r.addedByName || r.addedByEmail)}</div>` : ''}</td>
             <td class="num">${fmt(r.amount)}</td>
             <td class="num">${fmt(r.cumulative)}</td>
             <td class="num ${rowRemaining<0?'neg':''}">${fmt(rowRemaining)}</td>
@@ -1269,10 +1324,11 @@ function initAuthListener(){
       render();
       return;
     }
-    state.user = {uid:user.uid, email:user.email};
+    state.user = {uid:user.uid, email:user.email, displayName:''};
     let profile = null;
     try{ profile = await window.fb.getUserProfile(user.uid); }catch(e){ console.error(e); }
     state.userDivision = profile ? profile.divisionKey : null;
+    state.user.displayName = (profile && profile.displayName) ? profile.displayName : '';
     state.activeDivision = state.userDivision || null;
     if(state.activeDivision){ subscribeToProjects(); }
     render();
