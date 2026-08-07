@@ -945,14 +945,23 @@ function addEntry(deptKey, catKey){
   const desc = document.getElementById('entryDesc').value.trim();
   const amount = Number(document.getElementById('entryAmount').value);
   if(!desc || !amount || amount<=0){ alert('กรุณากรอกรายการและจำนวนเงินให้ถูกต้อง'); return false; }
-  cat.entries.push({id:uid(), date, desc, amount, createdAt:Date.now()});
+  cat.entries.push({
+    id:uid(), date, desc, amount, createdAt:Date.now(),
+    addedBy: state.user ? state.user.uid : null,
+    addedByEmail: state.user ? state.user.email : null,
+  });
   saveState(); render();
   return false;
 }
+function canDeleteEntry(p, entry){
+  if(isProjectOwner(p)) return true;
+  return !!(entry.addedBy && state.user && entry.addedBy === state.user.uid);
+}
 function deleteEntry(deptKey, catKey, entryId){
   const p = getProject(state.activeProjectId);
-  if(!isProjectOwner(p)){ alert('ลบรายการจ่ายได้เฉพาะผู้สร้างแฟ้มงานนี้เท่านั้น'); return; }
   const cat = p.departments[deptKey].budgets[catKey];
+  const entry = cat.entries.find(e=>e.id===entryId);
+  if(!entry || !canDeleteEntry(p, entry)){ alert('ลบได้เฉพาะรายการที่ผู้สร้างแฟ้มงาน หรือตัวคุณเองเป็นคนเพิ่มเข้ามาเท่านั้น'); return; }
   if(!confirm('ยืนยันลบรายการนี้?')) return;
   cat.entries = cat.entries.filter(e=>e.id!==entryId);
   saveState(); render();
@@ -1096,8 +1105,6 @@ function renderMain(){
     } else {
       html += `<div class="dept-info-bar">
         <div class="dept-info-left">
-          <span class="dept-info-name">${deptName}</span>
-          <span class="dept-info-sep">·</span>
           ${state.editingNetworkKey===deptKey ? `
             <div class="field">
               <input type="text" id="networkNoInput" value="${escapeHtml(dept.networkNo||'')}" placeholder="เช่น 6001423758" onkeydown="if(event.key==='Enter')saveNetworkNo('${deptKey}'); if(event.key==='Escape')cancelEditNetworkNo();">
@@ -1181,13 +1188,14 @@ function renderCategoryDetail(deptKey, deptName, networkNo, catKey, cat, isOwner
       <tbody>
         ${t.rows.map(r=>{
           const rowRemaining = t.usable80 - r.cumulative;
+          const canDelete = isOwner || !!(r.addedBy && state.user && r.addedBy === state.user.uid);
           return `<tr>
             <td class="mono">${escapeHtml(r.date)}</td>
-            <td>${escapeHtml(r.desc)}</td>
+            <td>${escapeHtml(r.desc)}${r.addedByEmail ? `<div style="font-size:10.5px;color:var(--text-faint);margin-top:2px;">เพิ่มโดย ${escapeHtml(r.addedByEmail)}</div>` : ''}</td>
             <td class="num">${fmt(r.amount)}</td>
             <td class="num">${fmt(r.cumulative)}</td>
             <td class="num ${rowRemaining<0?'neg':''}">${fmt(rowRemaining)}</td>
-            <td><button class="del-x" onclick="deleteEntry('${deptKey}','${catKey}','${r.id}')" title="ลบรายการ">${isOwner?'✕':''}</button></td>
+            <td>${canDelete ? `<button class="del-x" onclick="deleteEntry('${deptKey}','${catKey}','${r.id}')" title="ลบรายการ">✕</button>` : ''}</td>
           </tr>`;
         }).join('')}
       </tbody>
@@ -1234,7 +1242,7 @@ function renderCategoryDetail(deptKey, deptName, networkNo, catKey, cat, isOwner
         <div class="summary-item"><div class="label">รวมจ่ายแล้ว</div><div class="val">${fmt(t.totalPaid)}</div></div>
         <div class="summary-item"><div class="label">คงเหลือ</div><div class="val ${remainCls}">${fmt(t.remaining)}</div></div>
       </div>
-      ${isOwner ? '' : `<div style="margin-top:12px;font-size:11.5px;color:var(--text-faint);">งบและรหัสแก้ไขได้เฉพาะผู้สร้างแฟ้มงานนี้ — คุณสามารถเพิ่มรายการจ่ายด้านล่างได้ตามปกติ</div>`}
+      ${isOwner ? '' : `<div style="margin-top:12px;font-size:11.5px;color:var(--text-faint);">งบและรหัสแก้ไขได้เฉพาะผู้สร้างแฟ้มงานนี้ — คุณเพิ่มรายการจ่ายได้ และลบได้เฉพาะรายการที่คุณเพิ่มเอง</div>`}
     </div>
 
     <div class="entry-form">
