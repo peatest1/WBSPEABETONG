@@ -312,10 +312,16 @@ body{
 
 /* category detail */
 .detail-back{
-  font-size:12.5px;color:var(--text-muted);cursor:pointer;display:inline-flex;
-  align-items:center;gap:5px;margin-bottom:12px;font-weight:600;
+  font-size:13px;color:var(--text);cursor:pointer;display:inline-flex;
+  align-items:center;gap:6px;margin-bottom:14px;font-weight:700;
+  background:#fff;border:1px solid var(--border);border-radius:8px;
+  padding:8px 14px;
 }
-.detail-back:hover{color:var(--text);}
+.detail-back:hover{border-color:var(--amber);color:var(--amber-dark);background:#FFFCF6;}
+.detail-network-badge{
+  font-family:'JetBrains Mono';font-size:12.5px;font-weight:700;color:var(--amber-dark);
+  background:#FCEED2;padding:3px 10px;border-radius:6px;letter-spacing:.02em;margin-left:6px;
+}
 .detail-head{
   background:var(--card);border:1px solid var(--border-soft);border-radius:var(--radius);
   padding:18px 20px;margin-bottom:16px;
@@ -1267,7 +1273,7 @@ function renderCategoryDetail(deptKey, deptName, networkNo, catKey, cat, isOwner
       <div class="detail-title-row">
         <div>
           <div class="detail-title">${cat.label}</div>
-          <div style="color:var(--text-muted);font-size:12.5px;margin-top:2px;">${deptName}${networkNo ? ' · เลขที่โครงข่าย <span class="mono">'+escapeHtml(networkNo)+'</span>' : ''}</div>
+          <div style="color:var(--text-muted);font-size:12.5px;margin-top:4px;display:flex;align-items:center;flex-wrap:wrap;">${deptName}${networkNo ? '<span class="detail-network-badge">เลขที่โครงข่าย '+escapeHtml(networkNo)+'</span>' : ''}</div>
         </div>
         <div class="detail-code-edit">
           <span>กิจกรรม</span>
