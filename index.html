@@ -1080,7 +1080,10 @@ function renderMain(){
   `;
 
   const addedKeys = Object.keys(p.departments);
-  if(!state.activeDeptKey && addedKeys.length){ state.activeDeptKey = addedKeys[0]; }
+  if(!state.activeDeptKey && addedKeys.length){
+    const firstInOrder = DEPARTMENTS.find(d=>addedKeys.includes(d.key));
+    state.activeDeptKey = firstInOrder ? firstInOrder.key : addedKeys[0];
+  }
   DEPARTMENTS.forEach(d=>{
     if(addedKeys.includes(d.key)){
       const active = state.activeDeptKey===d.key;
