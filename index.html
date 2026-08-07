@@ -1080,6 +1080,7 @@ function renderMain(){
   `;
 
   const addedKeys = Object.keys(p.departments);
+  if(!state.activeDeptKey && addedKeys.length){ state.activeDeptKey = addedKeys[0]; }
   DEPARTMENTS.forEach(d=>{
     if(addedKeys.includes(d.key)){
       const active = state.activeDeptKey===d.key;
@@ -1095,8 +1096,7 @@ function renderMain(){
     html += `<div class="empty-dept"><p>ยังไม่มีแผนกในแฟ้มงานนี้</p>
       ${isOwner ? `<button class="btn btn-primary btn-sm" onclick="openAddDeptModal()">+ เพิ่มแผนก</button>` : `<span style="font-size:12.5px;color:var(--text-faint);">รอผู้สร้างแฟ้มงานเพิ่มแผนก</span>`}</div>`;
   } else {
-    const deptKey = state.activeDeptKey || addedKeys[0];
-    if(state.activeDeptKey === null) state.activeDeptKey = deptKey;
+    const deptKey = state.activeDeptKey;
     const dept = p.departments[deptKey];
     const deptName = DEPARTMENTS.find(d=>d.key===deptKey).name;
 
